@@ -7,6 +7,7 @@ import re
 import glob
 import collections
 from collections import OrderedDict
+import functools
 import pprint
 import tqdm
 
@@ -120,11 +121,26 @@ def list_keys(args):
 
 
 def clean_hsmusic_data(sections):
+    def coerces_to(type_):
+        def decorator_coerce(func):
+            @functools.wraps(func)
+            def wrapper_coerce(value):
+                if isinstance(value, type_):
+                    return value
+                try:
+                    return func(value)
+                except Exception as error:
+                    print(f"Coerce error: {value} ({type(value).__name__}) -> {type(type_).__name__} raised {type(error).__name__}")
+                    raise error
+            return wrapper_coerce
+        return decorator_coerce
+
+    @coerces_to(list)
     def listify(str):
         if str.lower() == "none":
             return []
         else:
-            return current.split(", ")
+            return str.split(", ")
 
     # 0. Special cases happen (has track art)
 
@@ -300,11 +316,12 @@ def clean_hsmusic_data(sections):
             for key in key_list:
                 if section.get(key):
                     current = section[key]
-                    if not isinstance(current, type_):
-                        # if section.get(key):
-                        #     print(f"Section already has key {key!r} {section.get(key)=} {current=}")
-                        # print(f"COERCE {key=} = {current=} {coerce_(current)=}")
+                    # if section.get(key):
+                    #     print(f"Section already has key {key!r} {section.get(key)=} {current=}")
+                    try:
                         section[key] = coerce_(current)
+                    except Exception as error:
+                        print(f"Coerce error: COERCE {key=} = {current=} {coerce_(current)=}")
 
         for key in keyorder[::-1]:
             if key in section:

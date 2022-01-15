@@ -120,8 +120,10 @@ def list_keys(args):
 
 
 def clean_hsmusic_data(sections):
-    def listify(str):
-        if str.lower() == "none":
+    def listify(str_):
+        if isinstance(str_, list):
+            return str_
+        if str_.lower() == "none":
             return []
         else:
             return current.split(", ")
@@ -140,6 +142,7 @@ def clean_hsmusic_data(sections):
         # ("Group", "Groups"),
         ("Duratoin", "Duration"),
         ("Commrntary", "Commentary"),
+        # ("Artist", "Artists"),
         ("Banner Art", "Banner Artists"),
         ("Cover Art", "Cover Artists"),
         ("ACT", "Act"),
@@ -190,6 +193,7 @@ def clean_hsmusic_data(sections):
         'Also Released As',
 
         'Artist',
+        'Artists',
         'Aliases',
         'Contributors',
 
@@ -286,7 +290,12 @@ def clean_hsmusic_data(sections):
             section.pop("Default Track Cover Artists")
         if section.get("Cover Artists") == "none":
             section["Has Cover Art"] = False
-            section.pop("Cover Artists")
+            section.pop("Cover Artists")        
+
+        if section.get("Artist"):
+            if section.get("Album") or section.get("Track"):
+                assert not section.get("Artists")
+                section["Artists"] = section.pop("Artist")
 
         # Remap keys
         for keya, keyb in key_renames:

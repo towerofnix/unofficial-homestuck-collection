@@ -287,6 +287,14 @@ def clean_hsmusic_data(sections):
         if section.get("Cover Artists") == "none":
             section["Has Cover Art"] = False
             section.pop("Cover Artists")
+        if section.get("Artist"):
+            if section.get("Album") or section.get("Track"):
+                assert not section.get("Artists")
+                artist = section.pop("Artist")
+                if isinstance(artist, list):
+                    section["Artists"] = artist
+                else:
+                    section["Artists"] = listify(artist)
 
         # Remap keys
         for keya, keyb in key_renames:

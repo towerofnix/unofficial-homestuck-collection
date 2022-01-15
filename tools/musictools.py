@@ -7,6 +7,7 @@ import re
 import glob
 from collections import OrderedDict
 import pprint
+import tqdm
 
 TrackId = collections.namedtuple("TrackId", ["album", "name"])
 
@@ -89,6 +90,15 @@ def merge_bc_ids(args):
 
     print(misses)
 
+def yaml_lint(args):
+    for yaml_path in glob.glob(os.path.join(args.hsmusicdata, "**", "*.yaml"), recursive=True):
+        with open(yaml_path, "r", encoding="utf-8") as fp:
+            this = list(ordered_load_all(fp))
+        with open(yaml_path, "w", encoding="utf-8") as fp:
+            ordered_dump_all(
+                this, fp, 
+                encoding="utf-8", indent=4, allow_unicode=True
+            )
 
 def hsmtxt_to_yaml(args):
     for txt_path in glob.glob(os.path.join(args.hsmusicdata, "**", "*.txt"), recursive=True):
@@ -179,7 +189,8 @@ def main():
     cmdmap = {
         "merge_bc_ids": merge_bc_ids,
         "hsmtxt_to_yaml": hsmtxt_to_yaml,
-        "diff_yaml_to_out": diff_yaml_to_out
+        "diff_yaml_to_out": diff_yaml_to_out,
+        "yaml_lint": yaml_lint
     }
 
     for command in args.commands:

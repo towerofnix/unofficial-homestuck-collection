@@ -39,10 +39,15 @@ def ordered_dump_all(data, stream=None, Dumper=yaml.SafeDumper, **kwds):
     OrderedDumper.add_representer(OrderedDict, _dict_representer)
 
     def _str_presenter(dumper, data):
+        # data = data.strip()
         if len(data.splitlines()) > 1:  # check for multiline string
+            # print(len(data), len(data.splitlines()), data.splitlines(), "|")
+            # data.replace("\n\n", "<br>\n")
             return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
-        if len(data) > 80:  # check for multiline string
+        elif len(data) > 120:  # check for multiline string
+            # print(len(data), len(data.splitlines()), data.splitlines(), ">")
             return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='>')
+        # print(len(data), len(data.splitlines()), data.splitlines(), ".")
         return dumper.represent_scalar('tag:yaml.org,2002:str', data)
 
     OrderedDumper.add_representer(str, _str_presenter)
@@ -85,11 +90,9 @@ def merge_bc_ids(args):
     print(misses)
 
 
-def parse_yaml(args):
-    # Todo https://til.simonwillison.net/python/style-yaml-dump
-
+def hsmtxt_to_yaml(args):
     for txt_path in glob.glob(os.path.join(args.hsmusicdata, "**", "*.txt"), recursive=True):
-        # if not txt_path.endswith("perfectly-generic-album.txt"):
+        # if not txt_path.endswith("ithaca.txt"):
         #     continue
         print(txt_path)
 
@@ -113,11 +116,11 @@ def parse_yaml(args):
         )
         txt = re.sub(  # Blockquote style text
             r"^(\w[^:\n]+):\s*\n    ",
-            r'\g<1>: |\n    ',
+            r'\g<1>: |-\n    ',
             txt, flags=re.MULTILINE
         )
         pathname, __ = os.path.splitext(txt_path)
-        with open("tmp.yaml", "w", encoding="utf-8") as fp:
+        with open(pathname + ".txt.yaml", "w", encoding="utf-8") as fp:
             fp.write(txt)
         # for obj in ordered_load_all(txt):
         #     assert obj
@@ -128,17 +131,55 @@ def parse_yaml(args):
                 ordered_load_all(txt), fp, 
                 encoding="utf-8", indent=4, allow_unicode=True)
 
+def diff_yaml_to_out(args):
+    # Todo https://til.simonwillison.net/python/style-yaml-dump
+    with open(args.outjson, "r", encoding="utf-8") as fp:
+        outdata = json.load(fp)
+
+    outdata_albums = {
+        a.get("directory"): a
+        for a in outdata.get("albumData")
+    }
+
+    for txt_path in glob.glob(os.path.join(args.hsmusicdata, "album", "*.yaml"), recursive=True):
+        path, filename = os.path.split(txt_path)
+        directory, __ = os.path.splitext(filename)
+        with open(txt_path, "r", encoding="utf-8") as fp:
+            this_album_yaml = list(ordered_load_all(fp))
+
+        outdata_album = outdata_albums.get(directory)
+        with open("tmp.yaml", "w", encoding="utf-8") as fp:
+            ordered_dump_all([outdata_album], fp)
+
+        albummeta, *tracks = this_album_yaml
+        # pprint.pprint(albummeta)
+        # pprint.pprint(tracks)
+
+        for infield, outfield in [
+            ("Album", "name"),
+            ("URLs", "urls")
+        ]:
+            if albummeta[infield] != outdata_album[outfield]:
+                print(f"{infield} {albummeta[infield]=} != {outfield} {outdata_album[outfield]=}")
+            else:
+                pass
+                # print(f"{infield} {albummeta[infield]=} ok {outfield} {outdata_album[outfield]=}")
+
+        break
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("hsmusicdata", help="Directory of the hsmusic data repository")
-    parser.add_argument("musicjson", help="TUHC music.json file")
+    parser.add_argument("--hsmusicdata", help="Directory of the hsmusic data repository")
+    parser.add_argument("--musicjson", help="TUHC music.json file")
+    parser.add_argument("--outjson", help="hsmusic data.json file")
     parser.add_argument("commands", action="append")
     args = parser.parse_args()
 
     cmdmap = {
         "merge_bc_ids": merge_bc_ids,
-        "parse_yaml": parse_yaml
+        "hsmtxt_to_yaml": hsmtxt_to_yaml,
+        "diff_yaml_to_out": diff_yaml_to_out
     }
 
     for command in args.commands:

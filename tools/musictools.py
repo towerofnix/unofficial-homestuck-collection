@@ -183,6 +183,7 @@ def clean_hsmusic_data(sections):
     ]
 
     keyorder = [
+        'Name',
         'Album',
         'Track',
         'Directory',
@@ -200,11 +201,14 @@ def clean_hsmusic_data(sections):
 
         'Has URLs',
         'URLs',
+        'Dead URLs',
 
         'Has Track Art',
         'Has Cover Art',
         'Cover Artists',
         'Default Track Cover Artists',
+        'Cover Art Date',
+        'Cover Art File Extension',
 
         'Color',
         'Groups',
@@ -217,36 +221,34 @@ def clean_hsmusic_data(sections):
         'Lyrics',
         'Commentary',
         'Description',
+        'Context Notes',
 
-        'Banner Dimensions',
         'Banner Artists',
+        'Banner Dimensions',
+        'Banner File Extension',
         'Wallpaper Artists',
         'Wallpaper Style',
+        'Wallpaper File Extension',
 
         'Featured Tracks',
         'Flash',
         'Page',
         'Act',
         'CW',
-        # 'Name',
         # 'Content',
-        # 'Dead URLs',
         # 'Listed on Homepage',
         # 'Jump',
         # 'Artists',
         # 'Category',
         # 'Default Track Cover Art Date',
-        # 'Context Notes',
         # 'Row',
         # 'Type',
         # 'Count',
         # 'Actions',
-        # 'Cover Art Date',
         # 'Jump Color',
         # 'Short Name',
         # 'Major Release',
         # 'Banner Style',
-        # 'Cover Art File Extension',
         # 'Homepage',
         # 'Sidebar Content',
         # 'Albums',
@@ -262,8 +264,6 @@ def clean_hsmusic_data(sections):
         # 'Footer Content',
         # 'Commnentary',
         # 'Credits',
-        # 'Wallpaper File Extension',
-        # 'Banner File Extension',
         # 'Canon',
     ]
 
@@ -369,12 +369,12 @@ def hsmtxt_to_yaml(args):
         )
         RE_YLABEL = r'\w[^:\n]+: '
         txt = re.sub(  # Has special character to escape
-            rf"^({RE_YLABEL}|- )(.*?(: |null|\[|\]|\"|\||'|\d:\d).*?)$",
+            rf"^({RE_YLABEL}|- )(.*?(: |\[|\]|\"|\||'|\d:\d).*?)$",
             lambda match: f'{match.group(1)}"{escYamlScalar(match.group(2))}"',
             txt, flags=re.MULTILINE
         )
         txt = re.sub(  # Startswith to escape
-            rf"^({RE_YLABEL}|- )((null|\*|&|>|<|#).+?)$",
+            rf"^({RE_YLABEL}|- )((Yes|[Nn]ull|\*|&|>|<|#).*?)$",
             lambda match: f'{match.group(1)}"{escYamlScalar(match.group(2))}"',
             txt, flags=re.MULTILINE
         )

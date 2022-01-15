@@ -373,6 +373,11 @@ def hsmtxt_to_yaml(args):
             lambda match: f'{match.group(1)}"{escYamlScalar(match.group(2))}"',
             txt, flags=re.MULTILINE
         )
+        txt = re.sub(  # Artist "Yes" wreaks heck
+            rf"^Artist: Yes$",
+            "Artist: 'Yes'",
+            txt, flags=re.MULTILINE
+        )
         txt = re.sub(  # Startswith to escape
             rf"^({RE_YLABEL}|- )((null|\*|&|>|<|#).+?)$",
             lambda match: f'{match.group(1)}"{escYamlScalar(match.group(2))}"',

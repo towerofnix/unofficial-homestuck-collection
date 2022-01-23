@@ -138,7 +138,7 @@ def clean_hsmusic_data(sections):
 
     @coerces_to(list)
     def listify(obj):
-        if obj.lower() == "none":
+        if isinstance(obj, str) and obj.lower() == "none":
             return []
         else:
             return obj.split(", ")
@@ -161,7 +161,7 @@ def clean_hsmusic_data(sections):
         ("Banner Art", "Banner Artists"),
         ("Cover Art", "Cover Artists"),
         ("ACT", "Act"),
-        ("AKA", "Also Released As"),
+        ("AKA", "Originally Released As"),
         ("Body", "Content"),
         ("Footer", "Footer Content"),
         ("Jiff", "Cover Art File Extension"),
@@ -206,6 +206,7 @@ def clean_hsmusic_data(sections):
         'Track',
         'Directory',
         'Also Released As',
+        'Originally Released As',
 
         'Artist',
         'Artists',
@@ -329,7 +330,8 @@ def clean_hsmusic_data(sections):
                     try:
                         section[key] = coerce_(current)
                     except Exception as error:
-                        print(f"Coerce error: COERCE {key=} = {current=} {coerce_(current)=}")
+                        print(f"Coerce error: COERCE {key=} = {current=} {coerce_(current)=} in {section}")
+                        raise
 
         for key in keyorder[::-1]:
             if key in section:
@@ -399,7 +401,7 @@ def hsmtxt_to_yaml(args):
             txt, flags=re.MULTILINE
         )
         txt = re.sub(  # Startswith to escape
-            rf"^({RE_YLABEL}|- )((Yes|[Nn]ull|\*|&|>|<|#).*?)$",
+            rf"^({RE_YLABEL}|- )((([0-9_]+$)|Yes|[Nn]ull|\*|&|>|<|#).*?)$",
             lambda match: f'{match.group(1)}"{escYamlScalar(match.group(2))}"',
             txt, flags=re.MULTILINE
         )
@@ -464,13 +466,6 @@ def diff_yaml_to_out(args):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--hsmusicdata", help="Directory of the hsmusic data repository")
-    parser.add_argument("--musicjson", help="TUHC music.json file")
-    parser.add_argument("--outjson", help="hsmusic data.json file")
-    parser.add_argument("commands", nargs='+')
-    args = parser.parse_args()
-
     cmdmap = {
         "merge_bc_ids": merge_bc_ids,
         "hsmtxt_to_yaml": hsmtxt_to_yaml,
@@ -478,6 +473,14 @@ def main():
         "yaml_lint": yaml_lint,
         "list_keys": list_keys
     }
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--hsmusicdata", help="Directory of the hsmusic data repository")
+    parser.add_argument("--musicjson", help="TUHC music.json file")
+    parser.add_argument("--outjson", help="hsmusic data.json file")
+    parser.add_argument("commands", nargs='+', help=", ".join(cmdmap.keys()))
+    args = parser.parse_args()
+
 
     for command in args.commands:
         cmdmap[command](args)

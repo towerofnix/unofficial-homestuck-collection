@@ -43,17 +43,19 @@ def ordered_dump_all(data, stream=None, Dumper=yaml.SafeDumper, **kwds):
     OrderedDumper.add_representer(OrderedDict, _dict_representer)
 
     def _str_presenter(dumper, data):
-        # data = data.strip()
+        TAG_STR = 'tag:yaml.org,2002:str'
+        out = None
         if len(data.splitlines()) > 1:  # check for multiline string
-            # print(len(data), len(data.splitlines()), data.splitlines(), "|")
-            # data.replace("\n\n", "<br>\n")
             # TODO: Sometimes this style still outputs full lines: see jailbreak commentary for example
-            return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
+            out = dumper.represent_scalar(TAG_STR, data, style='|')
         elif len(data) > 120:  # check for multiline string
-            # print(len(data), len(data.splitlines()), data.splitlines(), ">")
-            return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='>')
-        # print(len(data), len(data.splitlines()), data.splitlines(), ".")
-        return dumper.represent_scalar('tag:yaml.org,2002:str', data)
+            out = dumper.represent_scalar(TAG_STR, data, style='>')
+        if re.match(r'^0\d', data):  # Avoid ambigious octal/hex output
+            return dumper.represent_scalar(TAG_STR, data, style="'")
+        
+        out = out or dumper.represent_scalar(TAG_STR, data)
+        # print(len(data), len(data.splitlines()), data.splitlines(), ".", out)
+        return out
 
     OrderedDumper.add_representer(str, _str_presenter)
 
@@ -402,7 +404,7 @@ def hsmtxt_to_yaml(args):
         )
         txt = re.sub(  # Startswith to escape
             rf"^({RE_YLABEL}|- )((([0-9_]+$)|Yes|[Nn]ull|\*|&|>|<|#).*?)$",
-            lambda match: f'{match.group(1)}"{escYamlScalar(match.group(2))}"',
+            lambda match: f"{match.group(1)}'{escYamlScalar(match.group(2))}'",
             txt, flags=re.MULTILINE
         )
         txt = re.sub(  # Blockquote style text
@@ -478,7 +480,7 @@ def main():
     parser.add_argument("--hsmusicdata", help="Directory of the hsmusic data repository")
     parser.add_argument("--musicjson", help="TUHC music.json file")
     parser.add_argument("--outjson", help="hsmusic data.json file")
-    parser.add_argument("commands", nargs='+', help=", ".join(cmdmap.keys()))
+    parser.add_argument("commands", nargs='+', choices=cmdmap.keys())   
     args = parser.parse_args()
 
 

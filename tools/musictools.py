@@ -166,7 +166,6 @@ def clean_hsmusic_data(sections):
         ("AKA", "Originally Released As"),
         ("Body", "Content"),
         ("Footer", "Footer Content"),
-        ("Jiff", "Cover Art File Extension"),
         ("Listed", "Show in Navigation Bar"),
         ("Note", "Context Notes"),
         ("Original Date", "Date First Released"),
@@ -308,7 +307,10 @@ def clean_hsmusic_data(sections):
             section.pop("Default Track Cover Artists")
         if section.get("Cover Artists") == "none":
             section["Has Cover Art"] = False
-            section.pop("Cover Artists")        
+            section.pop("Cover Artists")
+        if section.get("Jiff") == "Yeah":
+            section["Cover Art File Extension"] = "gif"
+            section.pop("Jiff")
 
         if section.get("Artist"):
             if section.get("Album") or section.get("Track"):

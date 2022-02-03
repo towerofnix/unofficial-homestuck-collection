@@ -311,6 +311,9 @@ def clean_hsmusic_data(sections):
         if section.get("Jiff") == "Yeah":
             section["Cover Art File Extension"] = "gif"
             section.pop("Jiff")
+        if section.get("CW"):
+            section["Tag"] = section.pop("CW")
+            section["Is CW"] = True
 
         if section.get("Artist"):
             if section.get("Album") or section.get("Track"):

@@ -145,6 +145,10 @@ def clean_hsmusic_data(sections):
         else:
             return obj.split(", ")
 
+    @coerces_to(int)
+    def intify(obj):
+        return int(obj)
+
     # 0. Special cases happen (has track art)
 
     key_renames = [
@@ -198,6 +202,11 @@ def clean_hsmusic_data(sections):
             "Wallpaper Artists",
             # "Track Art",
             # "Wallpaper Art",
+        ]),
+
+        # 2a. Also these become ints
+        (int, intify, [
+            "Count"
         ])
     ]
 
